@@ -8,7 +8,7 @@ optimization for load balancing and efficient resource allocation.
 from typing import List, Dict, Optional, Set
 import threading
 import time
-from collections import deque
+from collections import OrderedDict
 
 from ..core.task import Task, TaskStatus
 from ..core.edge_node import EdgeNode, NodeStatus
@@ -33,7 +33,8 @@ class TaskScheduler:
         self.optimizer = optimizer or MatroidOptimizer()
         self.nodes: Dict[str, EdgeNode] = {}
         self.tasks: Dict[str, Task] = {}
-        self.pending_tasks: deque = deque()
+        # Use OrderedDict for O(1) insertion/deletion while maintaining order
+        self.pending_tasks: OrderedDict[str, Task] = OrderedDict()
         self.lock = threading.Lock()
         self.metrics = {
             'total_tasks_scheduled': 0,
@@ -69,7 +70,7 @@ class TaskScheduler:
                         if task.status in [TaskStatus.SCHEDULED, TaskStatus.RUNNING]:
                             task.status = TaskStatus.PENDING
                             task.assigned_node = None
-                            self.pending_tasks.append(task)
+                            self.pending_tasks[task_id] = task
                 
                 del self.nodes[node_id]
     
@@ -82,7 +83,7 @@ class TaskScheduler:
         """
         with self.lock:
             self.tasks[task.task_id] = task
-            self.pending_tasks.append(task)
+            self.pending_tasks[task.task_id] = task
     
     def submit_tasks(self, tasks: List[Task]):
         """
@@ -94,7 +95,7 @@ class TaskScheduler:
         with self.lock:
             for task in tasks:
                 self.tasks[task.task_id] = task
-                self.pending_tasks.append(task)
+                self.pending_tasks[task.task_id] = task
     
     def schedule_tasks(self) -> Dict[str, str]:
         """
@@ -117,7 +118,7 @@ class TaskScheduler:
                 return {}
             
             # Convert pending tasks to list
-            pending_list = list(self.pending_tasks)
+            pending_list = list(self.pending_tasks.values())
             
             # Get optimal allocation using matroid optimizer
             allocation = self.optimizer.optimize_task_allocation(
@@ -130,10 +131,9 @@ class TaskScheduler:
             for task_id, node_id in allocation.items():
                 if self._assign_task_to_node(task_id, node_id):
                     scheduled[task_id] = node_id
-                    # Remove from pending queue
-                    task = self.tasks[task_id]
-                    if task in self.pending_tasks:
-                        self.pending_tasks.remove(task)
+                    # Remove from pending queue - O(1) operation
+                    if task_id in self.pending_tasks:
+                        del self.pending_tasks[task_id]
                     self.metrics['total_tasks_scheduled'] += 1
             
             return scheduled

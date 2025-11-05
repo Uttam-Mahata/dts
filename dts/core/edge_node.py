@@ -69,8 +69,14 @@ class EdgeNode:
         if task_id in self.assigned_tasks:
             self.assigned_tasks.remove(task_id)
         
+        # Add back released resources, ensuring we don't exceed capacity
+        # The min() protects against accounting errors
         self.cpu_available = min(self.cpu_available + cpu_req, self.cpu_capacity)
         self.memory_available = min(self.memory_available + memory_req, self.memory_capacity)
+        
+        # Sanity check: ensure we didn't somehow go over capacity
+        assert self.cpu_available <= self.cpu_capacity, "CPU available exceeded capacity"
+        assert self.memory_available <= self.memory_capacity, "Memory available exceeded capacity"
         
         # Update status if no longer overloaded
         if self.status == NodeStatus.OVERLOADED:

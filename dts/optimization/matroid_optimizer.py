@@ -141,9 +141,14 @@ class MatroidOptimizer:
         load_score = 1.0 - node.get_load_score()
         
         # Resource efficiency score (prefer nodes where resources are well-utilized)
-        cpu_fit = min(task.cpu_requirement / node.cpu_available, 1.0)
-        memory_fit = min(task.memory_requirement / node.memory_available, 1.0)
-        efficiency_score = (cpu_fit + memory_fit) / 2.0
+        # Avoid division by zero by checking available resources
+        if node.cpu_available > 0 and node.memory_available > 0:
+            cpu_fit = min(task.cpu_requirement / node.cpu_available, 1.0)
+            memory_fit = min(task.memory_requirement / node.memory_available, 1.0)
+            efficiency_score = (cpu_fit + memory_fit) / 2.0
+        else:
+            # Node is fully allocated, use minimal efficiency score
+            efficiency_score = 0.0
         
         # Network latency score (prefer lower latency)
         # Normalize latency to 0-1 range (assuming max latency of 1000ms)

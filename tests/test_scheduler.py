@@ -75,7 +75,7 @@ class TestTaskScheduler(unittest.TestCase):
         self.scheduler.submit_task(task)
         
         self.assertIn("test-task", self.scheduler.tasks)
-        self.assertIn(task, self.scheduler.pending_tasks)
+        self.assertIn("test-task", self.scheduler.pending_tasks)
     
     def test_submit_multiple_tasks(self):
         """Test submitting multiple tasks."""
