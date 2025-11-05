@@ -15,7 +15,7 @@ coverage.html
 # Build artifacts
 dts-server
 dts-server-*
-server
+/server
 
 # Go workspace file
 go.work
