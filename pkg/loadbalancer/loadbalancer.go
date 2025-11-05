@@ -80,10 +80,13 @@ func (lb *LoadBalancer) BalanceLoad() error {
 		}
 	}
 
-	// In a real implementation, we would migrate tasks from overloaded to underloaded nodes
-	// For now, we just identify the imbalance
-	_ = overloaded
-	_ = underloaded
+	// Task migration would require:
+	// 1. Selecting tasks from overloaded nodes
+	// 2. Finding suitable underloaded nodes
+	// 3. Coordinating with scheduler to move tasks
+	// 4. Handling task state transitions
+	// This is left for future enhancement as it requires deeper integration
+	// with task lifecycle management and potential task interruption handling
 
 	return nil
 }
